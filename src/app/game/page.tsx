@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Cell from "./cell";
 
 export default function Game() {
@@ -16,6 +16,19 @@ export default function Game() {
     null,
     null,
   ]);
+  const [scores, setScores] = useState<{ player1: number; player2: number }>({
+    player1: 0,
+    player2: 0,
+  });
+
+  useEffect(() => {
+    fetch("http://127.0.0.1:5000/scores")
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("Scores:", data);
+        setScores({ player1: data.player1, player2: data.player2 });
+      });
+  });
 
   const startGame = () => {
     console.log("starting game");
@@ -37,6 +50,11 @@ export default function Game() {
   const calcGameState = (g: (boolean | null)[]): string => {
     for (const w of winners) {
       if (g[w[0]] === g[w[1]] && g[w[1]] === g[w[2]] && g[w[0]] !== null) {
+        if (g[w[0]]) {
+          fetch("http://127.0.0.1:5000/score/player1", { method: "POST" });
+        } else {
+          fetch("http://127.0.0.1:5000/score/player2", { method: "POST" });
+        }
         return g[w[0]] ? "winner_player1" : "winner_player2";
       }
     }
@@ -99,6 +117,13 @@ export default function Game() {
   return (
     <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
       <main className="flex flex-col gap-[2px] row-start-2 items-center">
+        {scores && (
+          <div className="my-[20px]">
+            <div>Scores</div>
+            <div>Player 1: {scores.player1}</div>
+            <div>Player 2: {scores.player2}</div>
+          </div>
+        )}
         <div className="my-[20px]">
           {gameState === "not_started" && (
             <div className="bg-blue-500 text-white font-bold py-2 px-4 rounded hover:bg-blue-700">
